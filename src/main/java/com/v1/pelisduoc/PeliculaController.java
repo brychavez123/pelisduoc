@@ -1,9 +1,14 @@
 package com.v1.pelisduoc;
 
-import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -12,28 +17,52 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/peliculas")
 public class PeliculaController {
 
-    private final List<Pelicula> peliculas = new ArrayList<>();
+    private final PeliculaRepository peliculaRepository;
 
-    public PeliculaController() {
-        peliculas.add(new Pelicula(1L, "Avengers: Doomsday", 2026, "Anthony Russo y Joe Russo", "Superheroes", "Los heroes se enfrentan a Doctor Doom."));
-        peliculas.add(new Pelicula(2L, "The Mandalorian and Grogu", 2026, "Jon Favreau", "Ciencia ficcion", "Mando y Grogu vuelven a una nueva aventura."));
-        peliculas.add(new Pelicula(3L, "Toy Story 5", 2026, "Andrew Stanton", "Animacion", "Woody y Buzz regresan en una nueva historia."));
-        peliculas.add(new Pelicula(4L, "Shrek 5", 2026, "Walt Dohrn", "Animacion", "Shrek vuelve con una nueva mision."));
-        peliculas.add(new Pelicula(5L, "Super Mario World", 2026, "Aaron Horvath y Michael Jelenic", "Animacion", "Mario explora nuevos mundos con sus amigos."));
+    public PeliculaController(PeliculaRepository peliculaRepository) {
+        this.peliculaRepository = peliculaRepository;
     }
 
     @GetMapping
     public List<Pelicula> getPeliculas() {
-        return peliculas;
+        return peliculaRepository.findAll();
     }
 
     @GetMapping("/{id}")
-    public Pelicula getPeliculaPorId(@PathVariable Long id) {
-        for (Pelicula pelicula : peliculas) {
-            if (pelicula.getId().equals(id)) {
-                return pelicula;
-            }
+    public ResponseEntity<Pelicula> getPeliculaPorId(@PathVariable Long id) {
+        return peliculaRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PostMapping
+    public ResponseEntity<Pelicula> crearPelicula(@RequestBody Pelicula pelicula) {
+        pelicula.setId(null);
+        Pelicula creada = peliculaRepository.save(pelicula);
+        return ResponseEntity.status(HttpStatus.CREATED).body(creada);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Pelicula> actualizarPelicula(@PathVariable Long id, @RequestBody Pelicula pelicula) {
+        return peliculaRepository.findById(id)
+                .map(existente -> {
+                    existente.setTitulo(pelicula.getTitulo());
+                    existente.setAnio(pelicula.getAnio());
+                    existente.setDirector(pelicula.getDirector());
+                    existente.setGenero(pelicula.getGenero());
+                    existente.setSinopsis(pelicula.getSinopsis());
+                    Pelicula actualizada = peliculaRepository.save(existente);
+                    return ResponseEntity.ok(actualizada);
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> eliminarPelicula(@PathVariable Long id) {
+        if (!peliculaRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
         }
-        return null;
+        peliculaRepository.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }

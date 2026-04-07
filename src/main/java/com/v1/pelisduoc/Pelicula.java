@@ -1,13 +1,36 @@
 package com.v1.pelisduoc;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = "PELICULAS")
 public class Pelicula {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
+
+    @Column(nullable = false, length = 120)
     private String titulo;
+
     private Integer anio;
+
+    @Column(length = 120)
     private String director;
+
+    @Column(length = 60)
     private String genero;
+
+    @Column(length = 500)
     private String sinopsis;
+
+    public Pelicula() {
+    }
 
     public Pelicula(Long id, String titulo, Integer anio, String director, String genero, String sinopsis) {
         this.id = id;
